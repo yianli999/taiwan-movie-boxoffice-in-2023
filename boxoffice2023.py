@@ -60,7 +60,7 @@ for i in range(len(download_titles)):
     print('轉入df成功'+str(x))
     x+=1
 
-df['20230102'].info()
+#df['20230102'].info()
 
 #將object改成int
 L=['累計銷售金額','銷售金額','累計銷售票數','銷售票數']
@@ -69,8 +69,25 @@ for i in range(len(download_titles)):
         df[download_titles[i]][l] = df[download_titles[i]][l].astype(str).str.replace(',', '')  # 移除 ','
         df[download_titles[i]][l] = pd.to_numeric(df[download_titles[i]][l], errors='coerce').fillna(0).astype('int64') #轉為'int64'
         
+df['20230102'].info()
+#%%
+#把df.value 合併成一個 new dataframe movie_df
+movie_df=pd.concat([i for i in df.values()],axis=0,ignore_index=True)
+movie_df.info()
+country_isnull=movie_df[movie_df['國別地區'].isnull()!=False]
+#補movie_df['國別地區']的缺失值
+movie_df.iloc[916,0]='澳洲'
+movie_df.iloc[2710,0]='葉門'
+movie_df.info()
+#建立欄位計算週數
+movie_df['週數'] = movie_df.groupby('中文片名')['中文片名'].transform('count')
 
+#建立一個欄位['is_max_sale']  其值為bool值 ，判斷是否為groupby('中文片名') 累計銷售金額最大值
+movie_df['is_max_sale'] = movie_df.groupby('中文片名')['累計銷售金額'].transform(lambda x: x == x.max())
+#把判斷為False則刪除
+movie_df = movie_df[movie_df['is_max_sale'] != False]
+#刪除欄位['is_max_sale']
+movie_df.drop(columns='is_max_sale', inplace=True)
+movie_df=movie_df.reset_index(drop=True)
 
-
-
-
+time_isstr=movie_df[movie_df['上映日期'].apply(lambda x: isinstance(x, str))]
