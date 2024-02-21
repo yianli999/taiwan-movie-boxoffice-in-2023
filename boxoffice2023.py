@@ -73,11 +73,6 @@ df['20230102'].info()
 #把df.value 合併成一個 new dataframe movie_df
 movie_df=pd.concat([i for i in df.values()],axis=0,ignore_index=True)
 movie_df.info()
-country_isnull=movie_df[movie_df['國別地區'].isnull()!=False]
-#補movie_df['國別地區']的缺失值
-movie_df.iloc[916,0]='澳洲'
-movie_df.iloc[2710,0]='葉門'
-movie_df.info()
 #建立欄位計算週數
 movie_df['週數'] = movie_df.groupby('中文片名')['中文片名'].transform('count')
 
@@ -88,20 +83,29 @@ movie_df = movie_df[movie_df['is_max_sale'] != False]
 #刪除欄位['is_max_sale']
 movie_df.drop(columns='is_max_sale', inplace=True)
 movie_df=movie_df.reset_index(drop=True)
-#補缺失值 電影名稱:玫瑰母親 沒有上映日期
+
+#建立一個dataframe 把國別地區為nan的電影找出來
+country_isnull=movie_df[movie_df['國別地區'].isnull()!=False]
+#補movie_df['國別地區']的缺失值
+movie_df.iloc[278,0]='澳洲'
+movie_df.info()
+
+# 檢查 movie_df 中是否有空值
+if movie_df.isnull().values.any():
+    print("movie_df 中存在空值，請檢查")
+else:
+    print("movie_df 中没有空值，請繼續執行")
+#將movie_df['上映日期'] 2024-02-02 00:00:00改為2024/02/02    
 #movie_df_text=pd.concat([i for i in df.values()],axis=0,ignore_index=True)
 #movie_df_text[movie_df_text['中文片名']=='玫瑰母親']
-movie_df.iloc[688,2]='2023/05/12'
-
-#將time_isstr['上映日期'] 2024-02-02 00:00:00改為2024/02/02
+#movie_df.iloc[688,2]='2023/05/12'
 time_isstr=movie_df[movie_df['上映日期'].apply(lambda x: isinstance(x, str)==False)]
-time_isstr.loc[:,'上映日期']=time_isstr.loc[:,'上映日期'].apply(lambda x: x.strftime('%Y/%m/%d'))
-
-
-
-
-
-
+for i in time_isstr.index:
+    if time_isstr.loc[i,'中文片名']=='玫瑰母親':
+        time_isstr.loc[i,'上映日期']='2023/05/12'
+    if not isinstance(time_isstr.loc[i,'上映日期'], str):
+        time_isstr.loc[i,'上映日期']=time_isstr.loc[i,'上映日期'].strftime('%Y/%m/%d')
+    movie_df.loc[i,'上映日期']=time_isstr.loc[i,'上映日期']
 
 
 
