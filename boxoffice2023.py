@@ -55,8 +55,7 @@ for i in range(len(download_titles)):
     df[download_titles[i]]=pd.read_excel(f'download_{download_titles[i]}.xlsx',
                                          engine='openpyxl',
                                          usecols=['中文片名','國別地區','累計銷售金額','銷售金額','累計銷售票數',
-                                                  '銷售票數','上映院數','上映日期','申請人'],
-                                         parse_dates=['上映日期'])
+                                                  '銷售票數','上映院數','上映日期','申請人'])
     print('轉入df成功'+str(x))
     x+=1
 
@@ -89,5 +88,32 @@ movie_df = movie_df[movie_df['is_max_sale'] != False]
 #刪除欄位['is_max_sale']
 movie_df.drop(columns='is_max_sale', inplace=True)
 movie_df=movie_df.reset_index(drop=True)
+#補缺失值 電影名稱:玫瑰母親 沒有上映日期
+#movie_df_text=pd.concat([i for i in df.values()],axis=0,ignore_index=True)
+#movie_df_text[movie_df_text['中文片名']=='玫瑰母親']
+movie_df.iloc[688,2]='2023/05/12'
 
-time_isstr=movie_df[movie_df['上映日期'].apply(lambda x: isinstance(x, str))]
+#將time_isstr['上映日期'] 2024-02-02 00:00:00改為2024/02/02
+time_isstr=movie_df[movie_df['上映日期'].apply(lambda x: isinstance(x, str)==False)]
+time_isstr.loc[:,'上映日期']=time_isstr.loc[:,'上映日期'].apply(lambda x: x.strftime('%Y/%m/%d'))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
