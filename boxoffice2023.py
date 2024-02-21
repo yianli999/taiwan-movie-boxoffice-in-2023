@@ -107,12 +107,16 @@ for i in time_isstr.index:
         time_isstr.loc[i,'上映日期']=time_isstr.loc[i,'上映日期'].strftime('%Y/%m/%d')
     movie_df.loc[i,'上映日期']=time_isstr.loc[i,'上映日期']
 
+#發現中文電影名稱有重複，須找出重複並留下一筆(累積銷售金額最大者)
+movie_df.loc[:,'中文片名']=movie_df.loc[:,'中文片名'].apply(lambda x : x.replace(' ','').strip())
+movie_df['duplicated_movie']=movie_df['中文片名'].duplicated('last')
+duplicated_movie=movie_df[movie_df['duplicated_movie']==True]
+movie_df = movie_df[movie_df['duplicated_movie'] != True]
 
-
-
-
-
-
+#刪除無用欄位重整index
+movie_df.drop(columns='duplicated_movie', inplace=True)
+movie_df.drop(columns=['銷售票數','銷售金額'], inplace=True)
+movie_df=movie_df.reset_index(drop=True)
 
 
 
