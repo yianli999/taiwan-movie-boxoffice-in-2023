@@ -84,15 +84,21 @@ movie_df = movie_df[movie_df['is_max_sale'] != False]
 movie_df.drop(columns='is_max_sale', inplace=True)
 movie_df=movie_df.reset_index(drop=True)
 
-#建立一個dataframe 把國別地區為nan的電影找出來
-country_isnull=movie_df[movie_df['國別地區'].isnull()!=False]
+#建立一個dataframe把movie_df有nan的列找出來
+movie_df_isnull=movie_df[movie_df.columns][movie_df[movie_df.columns].isnull().any(axis=1)]
+
+
 #補movie_df['國別地區']的缺失值
-movie_df.iloc[278,0]='澳洲'
+for i in movie_df_isnull.index:
+    if movie_df_isnull.loc[i,'中文片名']=='夢想紅舞鞋':
+        movie_df_isnull.loc[i,'國別地區']='澳洲'
+    movie_df.loc[i,'國別地區']=movie_df_isnull.loc[i,'國別地區']
 movie_df.info()
 
 # 檢查 movie_df 中是否有空值
 if movie_df.isnull().values.any():
     print("movie_df 中存在空值，請檢查")
+    SystemExit()
 else:
     print("movie_df 中没有空值，請繼續執行")
 #將movie_df['上映日期'] 2024-02-02 00:00:00改為2024/02/02    
@@ -107,6 +113,7 @@ for i in time_isstr.index:
         time_isstr.loc[i,'上映日期']=time_isstr.loc[i,'上映日期'].strftime('%Y/%m/%d')
     movie_df.loc[i,'上映日期']=time_isstr.loc[i,'上映日期']
 
+
 #發現中文電影名稱有重複，須找出重複並留下一筆(累積銷售金額最大者)
 movie_df.loc[:,'中文片名']=movie_df.loc[:,'中文片名'].apply(lambda x : x.replace(' ','').strip())
 movie_df['duplicated_movie']=movie_df['中文片名'].duplicated('last')
@@ -118,8 +125,13 @@ movie_df.drop(columns='duplicated_movie', inplace=True)
 movie_df.drop(columns=['銷售票數','銷售金額'], inplace=True)
 movie_df=movie_df.reset_index(drop=True)
 
+#%%
+#寫入資料庫
+conn = sqlite3.connect('taiwan_movie_boxoffice_in_2023.db')
 
+movie_df.to_sql('movie_boxoffice', conn, index=False, if_exists='replace')
 
+conn.close()
 
 
 
