@@ -1,0 +1,1 @@
+Using Python to analyze movie box office data will involve web crawlers, data cleaning, and data visualization, such as pandas, requests, BeautifulSoup, and matplotlib. The movie box office period is 2023, and the data sources come from Taiwan Film & Audiouvisual Institute, open data services of the Ministry of Culture, and OMDB API.
