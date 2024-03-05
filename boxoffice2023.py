@@ -4,6 +4,7 @@ import pandas as pd
 import sqlite3
 import time
 
+key=input('請輸入想要查詢的年份:')
 url='https://www.tfai.org.tw/boxOffice/weekly'
 headers={'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)Chrome/120.0.0.0 Safari/537.36'}
 
@@ -15,6 +16,7 @@ soup=BeautifulSoup(html_body,'lxml')
 download = soup.find_all('ul','download-list')
 
 #抓國家電影中心票房統計周資料的class='title', class='xls'
+t=0
 download_titles=[]
 for i in download:
     download_names=i.find_all('span','title')
@@ -22,18 +24,24 @@ for i in download:
     for n in download_names:
         text=n.get_text().split('全國電影票房')[1].split('-')[0].strip()
         text=text.replace('年','').replace('/','')
-        if text == '20221226':
+        if text[:4] < key:
             break
-        download_titles.append(text)
+        if text[:4] == key:
+            download_titles.append(text)
+        else:
+            t+=1
 download_links=[]
 for i in download:
     download_xls = i.find_all('a','xls')
     time.sleep(2)
     for a in download_xls:
-        if a.get('href') == "/zh/file/download/2c95808284ccb2a901858197acbc0171":
+        t-=1
+        if t<0:
+            download_links.append('https://www.tfai.org.tw'+a.get('href'))
+        if t == len(download_titles)*-1:
             break
-        download_links.append('https://www.tfai.org.tw'+a.get('href'))
-
+        
+    
 #download抓取到xlsx檔
 x=0
 for i in download_links:
@@ -68,7 +76,6 @@ for i in range(len(download_titles)):
         df[download_titles[i]][l] = df[download_titles[i]][l].astype(str).str.replace(',', '')  # 移除 ','
         df[download_titles[i]][l] = pd.to_numeric(df[download_titles[i]][l], errors='coerce').fillna(0).astype('int64') #轉為'int64'
         
-df['20230102'].info()
 #%%
 #把df.value 合併成一個 new dataframe movie_df
 movie_df=pd.concat([i for i in df.values()],axis=0,ignore_index=True)
@@ -94,7 +101,7 @@ for i in movie_df_isnull.index:
         movie_df_isnull.loc[i,'國別地區']='澳洲'
     movie_df.loc[i,'國別地區']=movie_df_isnull.loc[i,'國別地區']
 movie_df.info()
-
+movie_df=movie_df.dropna()
 # 檢查 movie_df 中是否有空值
 if movie_df.isnull().values.any():
     print("movie_df 中存在空值，請檢查")
@@ -127,7 +134,7 @@ movie_df=movie_df.reset_index(drop=True)
 
 #%%
 #寫入資料庫
-conn = sqlite3.connect('taiwan_movie_boxoffice_in_2023.db')
+conn = sqlite3.connect(f'taiwan_movie_boxoffice_in_{key}.db')
 
 movie_df.to_sql('movie_boxoffice', conn, index=False, if_exists='replace')
 
