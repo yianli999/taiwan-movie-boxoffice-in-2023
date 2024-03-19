@@ -3,6 +3,8 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import sqlite3
 import time
+import os
+import shutil
 
 key=input('請輸入想要查詢的年份:')
 url='https://www.tfai.org.tw/boxOffice/weekly'
@@ -43,20 +45,34 @@ for i in download:
         
     
 #download抓取到xlsx檔
+mydir='movies'
+if os.path.exists(mydir):
+    shutil.rmtree(mydir)
+    print('已經存在%s'%mydir)
+else:
+    os.mkdir(mydir)
+    print('建立 %s 資料夾成功'% mydir)
+# 將link內容寫入download_{x}.xlsx
 x=0
 for i in download_links:
     response = requests.get(i,headers=headers)    
     if response.status_code == 200:
         file_content = response.content
-    # 將link內容寫入download_{x}.xlsx
-        with open(f'download_{download_titles[x]}.xlsx', 'wb') as file:
+        downloadName=f'download_{download_titles[x]}.xlsx'
+        with open(downloadName,'wb') as file:
             file.write(file_content)
-            print('文件載入成功')
-            x+=1
+        shutil.move(downloadName,'.\\'+mydir)    
+        print(f"已將 '{downloadName}' 移至 {mydir}")
+        x+=1
+        if x==len(download_titles):
+            break
     else:
         print('文件載入失敗')
+print(os.getcwd())
 #%%
 #讀取download的execel並轉成DataFrame
+os.chdir('C:\\Users\\88698\\OneDrive\\桌面\\taiwan_movie_boxoffice'+'\\'+mydir)
+print(os.getcwd())
 df={}
 x=0
 for i in range(len(download_titles)):
@@ -134,6 +150,7 @@ movie_df=movie_df.reset_index(drop=True)
 
 #%%
 #寫入資料庫
+os.chdir('C:\\Users\\88698\\OneDrive\\桌面\\taiwan_movie_boxoffice')
 conn = sqlite3.connect(f'taiwan_movie_boxoffice_in_{key}.db')
 
 movie_df.to_sql('movie_boxoffice', conn, index=False, if_exists='replace')
